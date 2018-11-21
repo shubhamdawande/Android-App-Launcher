@@ -14,7 +14,8 @@ import java.util.Locale;
 public class ListViewAdapter extends BaseAdapter {
 
     Context mContext;
-    private ArrayList<AppDetail> appList, searchedItems;
+    private ArrayList<AppDetail> appList;
+    public static ArrayList<AppDetail> searchedItems;
     private LayoutInflater inflater;
 
     ListViewAdapter(Context context, ArrayList<AppDetail> arrayList){
@@ -52,8 +53,8 @@ public class ListViewAdapter extends BaseAdapter {
         TextView appLabel = convertView.findViewById(R.id.item_app_label);
         appLabel.setText(searchedItems.get(position).label);
 
-        TextView appName = convertView.findViewById(R.id.item_app_name);
-        appName.setText(searchedItems.get(position).name);
+        //TextView appName = convertView.findViewById(R.id.item_app_name);
+        //appName.setText(searchedItems.get(position).name);
 
         return convertView;
     }

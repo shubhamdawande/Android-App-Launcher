@@ -1,18 +1,19 @@
 package com.ssd.androidlauncher;
 
+import android.app.WallpaperManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SearchView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +33,21 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         searchView = findViewById(R.id.search_view);
 
-        // Load apps to adapter view
+        // set device wallpaper as background
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+        final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+        RelativeLayout mainScreen = findViewById(R.id.main_activity);
+        mainScreen.setBackground(wallpaperDrawable);
+
+        // Load launcher category apps to adapter view
         listView = findViewById(R.id.list_view);
         loadApps();
         adapter = new ListViewAdapter(this, apps);
         listView.setAdapter(adapter);
 
-        // listen for searched text and provide results
+        // listen for searched text and provide filtered results
         searchView.setOnQueryTextListener(this);
+        addClickListener();
     }
 
     @Override
@@ -68,7 +76,27 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             app.label = act.loadLabel(manager);
             app.name = act.activityInfo.packageName;
             app.icon = act.activityInfo.loadIcon(manager);
+            if(app.icon.getIntrinsicHeight() != 96){
+                app.icon = resize(app.icon);
+            }
             apps.add(app);
         }
+    }
+
+    // Launch app after click
+    private void addClickListener(){
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
+                MainActivity.this.startActivity(manager.getLaunchIntentForPackage(ListViewAdapter.searchedItems.get(pos).name.toString()));
+            }
+        });
+    }
+
+    // To resize app icons
+    private Drawable resize(Drawable image) {
+        Bitmap b = ((BitmapDrawable)image).getBitmap();
+        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 96, 96, false);
+        return new BitmapDrawable(getResources(), bitmapResized);
     }
 }
