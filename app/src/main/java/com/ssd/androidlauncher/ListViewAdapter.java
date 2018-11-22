@@ -1,6 +1,7 @@
 package com.ssd.androidlauncher;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,15 +16,21 @@ public class ListViewAdapter extends BaseAdapter {
 
     Context mContext;
     private ArrayList<AppDetail> appList;
-    public static ArrayList<AppDetail> searchedItems;
+    public static ArrayList<AppDetail> searchedItems, allItems;
     private LayoutInflater inflater;
 
-    ListViewAdapter(Context context, ArrayList<AppDetail> arrayList){
+    ListViewAdapter(Context context, ArrayList<AppDetail> array1List, ArrayList<AppDetail> array2List){
 
         this.mContext = context;
         inflater = LayoutInflater.from(mContext);
-        this.appList = arrayList;
-        this.searchedItems = (ArrayList<AppDetail>) arrayList.clone();
+        this.appList = array1List;
+        this.searchedItems = (ArrayList<AppDetail>) array1List.clone(); // copy app list first
+
+        // Create a merged items arraylist -> apps + contacts
+        allItems = new ArrayList<>();
+        this.allItems.addAll(array1List);
+        this.allItems.addAll(array2List);
+        Log.i("s","s");
     }
 
     @Override
@@ -50,11 +57,11 @@ public class ListViewAdapter extends BaseAdapter {
         ImageView appIcon = convertView.findViewById(R.id.item_app_icon);
         appIcon.setImageDrawable(searchedItems.get(position).icon);
 
-        TextView appLabel = convertView.findViewById(R.id.item_app_label);
-        appLabel.setText(searchedItems.get(position).label);
+        TextView appLabel = convertView.findViewById(R.id.item_app_name);
+        appLabel.setText(searchedItems.get(position).name);
 
-        //TextView appName = convertView.findViewById(R.id.item_app_name);
-        //appName.setText(searchedItems.get(position).name);
+        TextView appName = convertView.findViewById(R.id.item_app_info);
+        appName.setText(searchedItems.get(position).info);
 
         return convertView;
     }
@@ -65,10 +72,10 @@ public class ListViewAdapter extends BaseAdapter {
         searchedItems.clear();
 
         if(text.length() > 0){
-            for(AppDetail app: appList){
-                CharSequence appName = app.label;
+            for(AppDetail item: allItems){
+                CharSequence appName = item.name;
                 if(appName.toString().toLowerCase(Locale.getDefault()).contains(text)){
-                    searchedItems.add(app);
+                    searchedItems.add(item);
                 }
             }
         }

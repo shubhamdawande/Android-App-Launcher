@@ -4,7 +4,8 @@ import android.graphics.drawable.Drawable;
 
 public class AppDetail {
 
-    CharSequence label;
-    CharSequence name;
-    Drawable icon;
+    CharSequence name; // app: label, contact: name
+    CharSequence info; // app: package name, contact: number
+    Drawable icon;     // app: app icon, contact: fixed
+    String type;
 }
