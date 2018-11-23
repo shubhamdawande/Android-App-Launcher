@@ -14,9 +14,10 @@ import java.util.Locale;
 
 public class ListViewAdapter extends BaseAdapter {
 
-    Context mContext;
+    private Context mContext;
     private ArrayList<AppDetail> appList;
-    public static ArrayList<AppDetail> searchedItems, allItems;
+    static ArrayList<AppDetail> searchedItems;
+    private static ArrayList<AppDetail> allItems;
     private LayoutInflater inflater;
 
     ListViewAdapter(Context context, ArrayList<AppDetail> array1List, ArrayList<AppDetail> array2List){
@@ -24,13 +25,12 @@ public class ListViewAdapter extends BaseAdapter {
         this.mContext = context;
         inflater = LayoutInflater.from(mContext);
         this.appList = array1List;
-        this.searchedItems = (ArrayList<AppDetail>) array1List.clone(); // copy app list first
+        searchedItems = (ArrayList<AppDetail>) array1List.clone(); // copy app list first
 
         // Create a merged items arraylist -> apps + contacts
         allItems = new ArrayList<>();
-        this.allItems.addAll(array1List);
-        this.allItems.addAll(array2List);
-        Log.i("s","s");
+        allItems.addAll(array1List);
+        allItems.addAll(array2List);
     }
 
     @Override
@@ -57,17 +57,22 @@ public class ListViewAdapter extends BaseAdapter {
         ImageView appIcon = convertView.findViewById(R.id.item_app_icon);
         appIcon.setImageDrawable(searchedItems.get(position).icon);
 
-        TextView appLabel = convertView.findViewById(R.id.item_app_name);
-        appLabel.setText(searchedItems.get(position).name);
+        TextView appName = convertView.findViewById(R.id.item_app_name);
+        appName.setText(searchedItems.get(position).name);
 
-        TextView appName = convertView.findViewById(R.id.item_app_info);
-        appName.setText(searchedItems.get(position).info);
+        TextView appInfo = convertView.findViewById(R.id.item_app_info);
+        appInfo.setText(searchedItems.get(position).info);
+
+        ImageView appCallIcon = convertView.findViewById(R.id.item_app_callIcon);
+        appCallIcon.setImageDrawable(searchedItems.get(position).callIcon);
 
         return convertView;
     }
 
-    // Search filter
-    public void filter(String text){
+    /**
+     * Search filter
+     */
+    void filter(String text){
         text = text.toLowerCase(Locale.getDefault());
         searchedItems.clear();
 

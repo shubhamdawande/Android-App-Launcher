@@ -16,13 +16,11 @@ import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
-import android.widget.SimpleCursorAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,29 +41,43 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         searchView = findViewById(R.id.search_view);
 
-        // Set view background
+        /*
+         * Set view background
+         */
         setBackground();
 
-        // Get apps with category launcher
+        /*
+         * Get apps with category launcher
+         */
         listView = findViewById(R.id.list_view);
         loadApps();
 
-        // Get contacts list
+        /*
+         * Get contacts list
+         */
         getAllContacts();
 
-        // Load listview with apps
+        /*
+         * Load listview with apps
+         */
         adapter = new ListViewAdapter(this, apps, contacts);
         listView.setAdapter(adapter);
 
-        // listen for searched text and provide filtered results
+        /*
+         * listen for searched text and provide filtered results
+         */
         searchView.setOnQueryTextListener(this);
         addClickListener();
     }
 
-    // Get all contacts
+    /**
+     * Retrive all contacts from phone
+     */
     private void getAllContacts() {
 
-        // Request permission
+        /*
+         * Request read permission
+         */
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED){
             if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
@@ -76,12 +88,28 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             }
         }
 
-        // Run query
+        /*
+         * Request call permission
+         */
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.CALL_PHONE)) {
+            } else {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.CALL_PHONE}, 200);
+            }
+        }
+
+        /*
+         * Run query and get contact information from cursor into contacts<ArrayList>
+         */
         contacts = new ArrayList<>();
         ContentResolver cr = getContentResolver();
         Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
                 null, null, null, null);
 
+        assert cur != null;
         if (cur.getCount() > 0) {
             while (cur.moveToNext()) {
                 AppDetail cd = new AppDetail();
@@ -95,15 +123,16 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 Cursor phones = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,
                         ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId,
                         null, null);
+                assert phones != null;
                 while (phones.moveToNext()){
                     cd.info = phones.getString(phones.getColumnIndex(
                             ContactsContract.CommonDataKinds.Phone.NUMBER));
                 }
                 phones.close();
                 if(cd.info != null){
-                    cd.icon = ContextCompat.getDrawable(getApplicationContext(),
-                            R.drawable.contacts);
-                    cd.icon = resize(cd.icon);
+                    cd.icon = resize(ContextCompat.getDrawable(getApplicationContext(), R.drawable.contacts));
+                    cd.callIcon = resize(ContextCompat.getDrawable(getApplicationContext(),
+                            R.drawable.callicon));
                     cd.type = "contact";
                     contacts.add(cd);
                 }
@@ -112,15 +141,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         cur.close();
     }
 
-    // set device wallpaper as background
-    private void setBackground(){
-
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-        final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
-        RelativeLayout mainScreen = findViewById(R.id.main_activity);
-        mainScreen.setBackground(wallpaperDrawable);
-    }
-
+    /**
+     * Search text change listener
+     */
     @Override
     public boolean onQueryTextSubmit(String query) {
         adapter.filter(query);
@@ -133,7 +156,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return false;
     }
 
-    // Load list of launcher category apps
+    /**
+     * Load list of launcher category apps
+     */
     private void loadApps() {
         manager = getPackageManager();
         apps = new ArrayList<>();
@@ -145,7 +170,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         for (ResolveInfo act : availableActivities) {
             AppDetail app = new AppDetail();
             app.name = act.loadLabel(manager);
-            app.info = act.activityInfo.packageName;
+            app.info = null;
+            app.callIcon = null;
+            app.packageName = act.activityInfo.packageName;
             app.icon = act.activityInfo.loadIcon(manager);
             if(app.icon.getIntrinsicHeight() != 96){
                 app.icon = resize(app.icon);
@@ -155,24 +182,47 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
-    // Launch app after click
+    /**
+     * Launch corresponding activity after click
+     */
     private void addClickListener(){
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
 
                 AppDetail item = ListViewAdapter.searchedItems.get(pos);
+                // Open selected application
                 if(item.type.equals("application")) {
-                    MainActivity.this.startActivity(manager.getLaunchIntentForPackage(ListViewAdapter.searchedItems.get(pos).info.toString()));
+                    MainActivity.this.startActivity(manager.getLaunchIntentForPackage(
+                            ListViewAdapter.searchedItems.get(pos).packageName.toString()));
+                }
+                // Call selected person
+                else if(item.type.equals("contact")){
+                    Intent callIntent = new Intent(Intent.ACTION_CALL);
+                    callIntent.setData(Uri.parse("tel:" + item.info));
+                    startActivity(callIntent);
                 }
             }
         });
     }
 
-    // Utility: To resize app icons
+    /**
+     * Utility: To resize app icons
+     */
     private Drawable resize(Drawable image) {
         Bitmap b = ((BitmapDrawable)image).getBitmap();
         Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 96, 96, false);
         return new BitmapDrawable(getResources(), bitmapResized);
+    }
+
+    /**
+     * set device wallpaper as background
+     */
+    private void setBackground(){
+
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+        final Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+        RelativeLayout mainScreen = findViewById(R.id.main_activity);
+        mainScreen.setBackground(wallpaperDrawable);
     }
 }
