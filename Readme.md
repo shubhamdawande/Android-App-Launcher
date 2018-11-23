@@ -7,4 +7,4 @@ Updates:
 
 * Added support for easy app search
 * Added support for contact search and access
-* Improved UI
+* Application Icons and calling feature added 
